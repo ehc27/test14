@@ -1,115 +1,81 @@
-canvas = document.getElementById('myCanvas');
-ctx = canvas.getContext("2d");
+prediction_1 = ""
+prediction_2 = ""
 
-greencar_width = 75;
-greencar_height = 100;
+Webcam.set({
+    width : 350,
+    height : 300,
+    image_format: 'png',
+    png_quality: 90
+  });
 
-background_image = "parkingLot.jpg";
-greencar_image = "car2.png";
+camera = document.getElementById('camera')
 
-//greencar_x = 75;
-//greencar_y = 325;
-greencar_x = 5;
-greencar_y= 225;
+Webcam.attach('#camera');
 
-function add() {
-	background_imgTag = new Image(); 				//defining a variable with a new image
-	background_imgTag.onload = uploadBackground; 	// setting a function, onloading this variable
-	background_imgTag.src = background_image;   	// load image
-
-	greencar_imgTag = new Image(); 				//defining a variable with a new image
-	greencar_imgTag.onload = uploadgreencar; 	// setting a function, onloading this variable
-	greencar_imgTag.src = greencar_image;  		 // load image
-
-}
-
-function uploadBackground() {
-	ctx.drawImage(background_imgTag, 0, 0, canvas.width, canvas.height);
-}
-
-function uploadgreencar() {
-	ctx.drawImage(greencar_imgTag, greencar_x,greencar_y, greencar_width, greencar_height);
-	
-}
-
-
-window.addEventListener("keydown", my_keydown);
-
-function my_keydown(e)
+function take_snapshot()
 {
-	keyPressed = e.keyCode;
-	console.log(keyPressed);
-		if(keyPressed == '38')
-		{
-			up();
-			console.log("up");
-		}
-	
-		if(keyPressed == '40')
-		{
-			down();
-			console.log("down");
-		}
-		
-		if(keyPressed == '37')
-		{
-			left();
-			console.log("left");
-		}
-	
-		if(keyPressed == '39')
-		{
-			right();
-			console.log("right");
-		}
-		
-		
+    Webcam.snap(function(data_uri) {
+ 
+        document.getElementById("result").innerHTML = '<img id="captured_image" src="'+data_uri+'"/>';
+    });
 }
 
-function up()
-{
-	if(greencar_y >=0)
-	{
-		greencar_y = greencar_y - 10;
-		console.log("When up arrow is pressed,  x = " + greencar_x + " | y = " +greencar_y);
-		 uploadBackground();
-		 uploadgreencar();
-		
-	}
+classifier = ml5.imageClassifier('https://teachablemachine.withgoogle.com/models/w6mj4Zc1f/model.json',modelLoaded);
+
+function speak(){
+var synth = window.speechSynthesis;
+speak_data_1 = "A primeira previsão é " + prediction_1;
+speak_data_2 = "E a segunda previsão é " + prediction_2;
+var utterThis = new SpeechSynthesisUtterance(speak_data_1 + speak_data_2);
+synth.speak(utterThis)
 }
 
-function down()
+
+function check()
 {
-	if(greencar_y <=350)
-	{
-		greencar_y =greencar_y+ 10;
-		console.log("When down arrow is pressed,  x = " + greencar_x + " | y = " +greencar_y);
-		uploadBackground();
-		uploadgreencar();
-		
-	}
+  img = document.getElementById('captured_image');
+  classifier.classify(img, gotResult);
 }
 
-function left()
-{
-	if(greencar_x >= 0)
-	{
-		greencar_x =greencar_x - 10;
-		console.log("When left arrow is pressed,  x = " + greencar_x + " | y = " +greencar_y);
-		uploadBackground();
-		 uploadgreencar();
-		
-	}
-}
 
-function right()
-{
-	if(greencar_x <= 750)
-	{
-		greencar_x =greencar_x + 10;
-		console.log("When right arrow is pressed,  x = " + greencar_x + " | y = " +greencar_y);
-		uploadBackground();
-		uploadgreencar();
-		
-   }
+function gotResult(error, results) {
+if(error){
+  console.error(error)
+} else {
+  document.getElementById("result_emotion_name").innerHTML = results[0].label;
+  document.getElementById("result_emotion_name2").innerHTML = results[1].label;
+  prediction_1 = results[0].label;
+  prediction_2 = results[1].label;
+  speak();
+
+  if(result[0].label == "feliz")
+  {
+    document.getElementById("update_emoji").innerHTML = "&#128522;";
+  }
+  if(result[0].label == "triste")
+  {
+    document.getElementById("update_emoji").innerHTML = "&#128532;";
+  }
+  if(result[0].label == "irritado")
+  {
+    document.getElementById("update_emoji").innerHTML = "&#128548;";
+  }
+
+  //Adicione o número 1, pois ele corresponde a segunda previsão
+  if(result[1].label == "feliz")
+  {
+    document.getElementById("update_emoji2").innerHTML = "&#128522;";
+  }
+  if(result[1].label == "triste")
+  {
+    document.getElementById("update_emoji2").innerHTML = "&#128532;";
+  }
+  if(result[1].label == "irritado")
+  {
+    document.getElementById("update_emoji2").innerHTML = "&#128548;";
+  }
+}
+}
+function modelLoaded(){
+  console.log("modelo carregado!")
 }
